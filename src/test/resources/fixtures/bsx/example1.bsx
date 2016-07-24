@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE BrickStockXML>
+<BrickStockXML>
+ <Inventory>
+  <Item>
+   <ItemID>99009</ItemID>
+   <ItemTypeID>P</ItemTypeID>
+   <ColorID>86</ColorID>
+   <ItemName>Technic Turntable Small Bottom</ItemName>
+   <ItemTypeName>Part</ItemTypeName>
+   <ColorName>Light Bluish Gray</ColorName>
+   <CategoryID>36</CategoryID>
+   <CategoryName>Technic</CategoryName>
+   <Status>I</Status>
+   <Qty>3</Qty>
+   <Price>0.970</Price>
+   <Condition>U</Condition>
+   <OrigPrice>0.055</OrigPrice>
+   <OrigQty>0</OrigQty>
+  </Item>
+  <Item>
+   <ItemID>3403c01</ItemID>
+   <ItemTypeID>P</ItemTypeID>
+   <ColorID>1</ColorID>
+   <ItemName>Turntable 4 x 4 Square Base with Top, Complete Assembly</ItemName>
+   <ItemTypeName>Part</ItemTypeName>
+   <ColorName>White</ColorName>
+   <CategoryID>40</CategoryID>
+   <CategoryName>Turntable</CategoryName>
+   <Status>I</Status>
+   <Qty>2</Qty>
+   <Price>0.148</Price>
+   <Condition>N</Condition>
+   <OrigPrice>0.100</OrigPrice>
+  </Item>
+ </Inventory>
+ <GuiState Application="BrickStock" Version="1">
+  <ItemView>
+   <ColumnOrder>0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30</ColumnOrder>
+   <ColumnWidths>21,45,75,201,40,110,40,61,61,40,40,61,61,89,89,40,61,40,61,40,61,0,0,0,0,0,0,40,40,61,61</ColumnWidths>
+   <ColumnWidthsHidden>0,0,0,0,0,0,0,0,0,40,40,61,0,0,0,40,61,40,61,40,61,61,61,61,61,75,40,40,40,61,61</ColumnWidthsHidden>
+   <SortColumn>32</SortColumn>
+   <SortDirection>A</SortDirection>
+  </ItemView>
+ </GuiState>
+</BrickStockXML>
