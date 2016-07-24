@@ -1,8 +1,9 @@
 package blue.array.brick.brickstock
 
 import org.specs2.mutable.SpecificationLike
-
 import java.io.File
+
+import blue.array.brick.{ItemCondition, ItemType}
 
 
 class BSXReaderSpec extends SpecificationLike {

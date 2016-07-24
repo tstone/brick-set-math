@@ -2,11 +2,18 @@ package blue.array.brick.brickstock
 
 import java.io.File
 
-import scala.util.Try
-import scala.xml.{Elem, XML}
+import blue.array.brick.{ItemCondition, ItemType}
+import blue.array.brick.ItemType._
+import blue.array.brick.ItemCondition._
+
+import scala.util.{Failure, Success, Try}
+import scala.xml.{Elem, Node, XML}
 
 
 object BSXReader {
+
+  type ParsedBSXDocument = Seq[Try[BrickStockEntry]]
+  case class BSXParsingException(description: String, node: Node) extends Exception(s"$description\n\ton:\n\t$node")
 
   /*
     <ItemID>2456</ItemID>
@@ -24,16 +31,27 @@ object BSXReader {
     <OrigQty>0</OrigQty>
   */
 
-  def load(file: String): Seq[Try[BrickStockEntry]] = load(XML.loadFile(file))
-  def load(file: File): Seq[Try[BrickStockEntry]] = load(XML.loadFile(file))
+  def load(file: String): ParsedBSXDocument = load(XML.loadFile(file))
+  def load(file: File): ParsedBSXDocument = load(XML.loadFile(file))
 
-  private def load(elem: Elem): Seq[Try[BrickStockEntry]] = {
+  private def typeFromString(value: String): Try[ItemType] = value match {
+    case "P" => Success(Part)
+    case v   => Failure(new Exception(s"Unknown item type `$v`"))
+  }
+
+  private def conditionFromString(value: String): Try[ItemCondition] = value match {
+    case "N" => Success(New)
+    case "U" => Success(Used)
+    case v   => Failure(new Exception(s"Unknown item condition `$v`"))
+  }
+
+  private def load(elem: Elem): ParsedBSXDocument = {
     (elem \\ "BrickStockXML" \\ "Inventory" \\ "Item").map { node =>
-      for {
-        itemType <- ItemType.fromXMLString((node \ "ItemTypeID").text)
+      val tryElement = for {
+        itemType <- typeFromString((node \ "ItemTypeID").text)
         quantity <- Try((node \ "Qty").text.toInt)
         price <- Try(BigDecimal((node \ "Price").text))
-        condition <- ItemCondition.fromXMLString((node \ "Condition").text)
+        condition <- conditionFromString((node \ "Condition").text)
       } yield BrickStockEntry(
         itemId = (node \ "ItemID").text,
         typ = itemType,
@@ -45,6 +63,12 @@ object BSXReader {
         price = price,
         condition = condition
       )
+
+      // Wrap all exceptions in a higher level exception that includes the node that failed
+      tryElement match {
+        case Success(r) => Success(r)
+        case Failure(ex) => Failure(new BSXParsingException(ex.getMessage, node))
+      }
     }
   }
 
