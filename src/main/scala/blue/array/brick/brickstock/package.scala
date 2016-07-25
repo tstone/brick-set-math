@@ -1,10 +1,7 @@
 package blue.array.brick
 
 
-
 package object brickstock {
-
-  type BSXDocument = Map[ItemSignature, BrickStockEntry]
 
   case class BrickStockEntry(
     itemId: String,

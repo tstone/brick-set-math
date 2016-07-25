@@ -18,7 +18,6 @@ package object brick {
     case object Set extends ItemType
   }
 
-
   sealed trait ItemCondition extends EnumEntry
   object ItemCondition extends Enum[ItemCondition] {
     val values = findValues
