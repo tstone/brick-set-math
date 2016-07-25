@@ -77,30 +77,31 @@ object BSXReader {
     case v   => Failure(new Exception(s"Unknown item condition `$v`"))
   }
 
-  private def load(elem: Elem): ParsedBSXDocument = {
-    (elem \\ "BrickStockXML" \\ "Inventory" \\ "Item").map { node =>
-      val tryElement = for {
-        itemType <- typeFromString((node \ "ItemTypeID").text)
-        quantity <- Try((node \ "Qty").text.toInt)
-        price <- Try(BigDecimal((node \ "Price").text))
-        condition <- conditionFromString((node \ "Condition").text)
-      } yield BrickStockEntry(
-        itemId = (node \ "ItemID").text,
-        typ = itemType,
-        colorId = (node \ "ColorID").text,
-        colorName = (node \ "ColorName").text,
-        categoryId = (node \ "CategoryID").text,
-        categoryName = (node \ "CategoryName").text,
-        quantity = quantity,
-        price = price,
-        condition = condition
-      )
+  def load(document: Elem): ParsedBSXDocument =
+    (document \\ "BrickStockXML" \\ "Inventory" \\ "Item").map(loadNode)
 
-      // Wrap all exceptions in a higher level exception that includes the node that failed
-      tryElement match {
-        case Success(r) => Success(r)
-        case Failure(ex) => Failure(BSXParsingException(ex.getMessage, node))
-      }
+  def loadNode(node: Node): Try[BrickStockEntry] = {
+    val tryElement = for {
+      itemType <- typeFromString((node \ "ItemTypeID").text)
+      quantity <- Try((node \ "Qty").text.toInt)
+      price <- Try(BigDecimal((node \ "Price").text))
+      condition <- conditionFromString((node \ "Condition").text)
+    } yield BrickStockEntry(
+      itemId = (node \ "ItemID").text,
+      typ = itemType,
+      colorId = (node \ "ColorID").text,
+      colorName = (node \ "ColorName").text,
+      categoryId = (node \ "CategoryID").text,
+      categoryName = (node \ "CategoryName").text,
+      quantity = quantity,
+      price = price,
+      condition = condition
+    )
+
+    // Wrap all exceptions in a higher level exception that includes the node that failed
+    tryElement match {
+      case Success(r) => Success(r)
+      case Failure(ex) => Failure(BSXParsingException(ex.getMessage, node))
     }
   }
 
