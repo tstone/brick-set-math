@@ -10,7 +10,7 @@ trait ItemEntry[A] {
   def quantity(a: A): Int
   def price(a: A): BigDecimal
   def condition(a: A): ItemCondition
+  def applyQuantity(a: A, f: Int => Int): A
 
-  def signature(a: A): ItemSignature =
-    ItemSignature(itemId(a), typ(a), condition(a))
+  def signature(a: A): ItemSignature = ItemSignature(itemId(a), typ(a), condition(a))
 }

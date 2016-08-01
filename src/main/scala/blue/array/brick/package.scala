@@ -1,9 +1,14 @@
 package blue.array
 
+import blue.array.brick.BrickSet.BrickSet
 import enumeratum.{Enum, EnumEntry}
 
 
 package object brick {
+
+  /** "ToParts" refers to the process of taking something that is a collection of parts,
+    * e.g. a minifig or assembly, and turning it into the smallest unit available, a part */
+  type PartsProvider[A] = String => BrickSet[A]
 
   sealed trait ItemType extends EnumEntry
   object ItemType extends Enum[ItemType] {
