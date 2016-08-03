@@ -1,6 +1,5 @@
 package blue.array.brick
 
-import blue.array.brick.brickstock.BrickStockEntry
 import org.scalacheck.Gen
 
 
@@ -15,9 +14,11 @@ package object generators {
     combination <- Gen.option(Gen.choose(10, 1000))
   } yield baseId + combination.map("c" + _.toString).getOrElse("")
 
-  lazy val genBrickStockEntry: Gen[BrickStockEntry] = for {
+  lazy val genItemEntry: Gen[ItemEntry] =
+    Gen.oneOf(genSimplePartEntry, genComplexPartEntry)
+
+  lazy val genSimplePartEntry: Gen[SimplePartEntry] = for {
     itemId <- genItemId
-    typ <- Gen.oneOf(ItemType.values)
     colorId <- Gen.choose(1, 200).map(_.toString)
     colorName <- Gen.oneOf("White", "Trans-Neon Green", "Dark Blue")
     categoryId <- Gen.choose(1, 300).map(_.toString)
@@ -25,9 +26,28 @@ package object generators {
     quantity <- Gen.oneOf(1, 150)
     price <- Gen.oneOf(BigDecimal(0.00), BigDecimal(20.00))
     condition <- Gen.oneOf(ItemCondition.values)
-  } yield BrickStockEntry(
+  } yield SimplePartEntry(
     itemId = itemId,
-    typ = typ,
+    colorId = colorId,
+    colorName = colorName,
+    categoryId = categoryId,
+    categoryName = categoryName,
+    quantity = quantity,
+    price = price,
+    condition = condition
+  )
+
+  lazy val genComplexPartEntry: Gen[ComplexPartEntry] = for {
+    itemId <- genItemId
+    colorId <- Gen.choose(1, 200).map(_.toString)
+    colorName <- Gen.oneOf("White", "Trans-Neon Green", "Dark Blue")
+    categoryId <- Gen.choose(1, 300).map(_.toString)
+    categoryName <- Gen.oneOf("Castle", "Pirates", "Agents")
+    quantity <- Gen.oneOf(1, 150)
+    price <- Gen.oneOf(BigDecimal(0.00), BigDecimal(20.00))
+    condition <- Gen.oneOf(ItemCondition.values)
+  } yield ComplexPartEntry(
+    itemId = itemId,
     colorId = colorId,
     colorName = colorName,
     categoryId = categoryId,

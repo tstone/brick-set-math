@@ -2,8 +2,8 @@ package blue.array.brick.brickstock
 
 import java.io.File
 
-import blue.array.brick.{ItemSignature, _}
-import blue.array.brick.ItemType._
+import blue.array.brick.BrickSet.BrickSet
+import blue.array.brick._
 import blue.array.brick.ItemCondition._
 
 import scala.util.{Failure, Success, Try}
@@ -17,32 +17,32 @@ import scala.xml.{Elem, Node, XML}
   */
 object BSXReader {
 
-  type ParsedBSXDocument = Seq[Try[BrickStockEntry]]
+  type ParsedBSXDocument = Seq[Try[ItemEntry]]
 
   case class BSXParsingException(description: String, node: Node) extends Exception(s"$description\n\ton:\n\t$node")
   case class ConformationException(description: String) extends Exception(description)
 
   // Take a raw sequence of entries and conform them to a unique
-  // mapping of item signatures
-  def conform(parsedDoc: ParsedBSXDocument): (Seq[Throwable], Map[ItemSignature, BrickStockEntry]) = {
-    val zero = (List.empty[Throwable], Map.empty[ItemSignature, BrickStockEntry])
+  // mapping of item uniqueIdentifiers
+  def conform(parsedDoc: ParsedBSXDocument): (Seq[Throwable], BrickSet[ItemEntry]) = {
+    val zero = (List.empty[Throwable], BrickSet.empty[ItemEntry])
 
     parsedDoc.foldLeft(zero) {
       case ((exceptions, doc), Failure(ex)) =>
         (ex :: exceptions, doc)
 
       case ((exceptions, doc), Success(entry)) =>
-        doc.get(entry.signature) match {
+        doc.get(entry.uniqueIdentifier) match {
           // Merge quantity if item already exists.  Ambiguous: what if the price is different?
           case Some(existing) if existing.price != entry.price =>
-            val conflatedEntry = existing.copy(quantity = existing.quantity + entry.quantity)
+            val conflatedEntry = existing.addQuantity(entry.quantity)
             (ConformationException(s"Found duplicate entries with differing prices for item ${entry.itemId}. Keeping price ${existing.price}") :: exceptions,
-              doc + (existing.signature -> conflatedEntry))
+              doc + (existing.uniqueIdentifier -> conflatedEntry))
           case Some(existing) =>
-            val conflatedEntry = existing.copy(quantity = existing.quantity + entry.quantity)
-            (exceptions, doc + (existing.signature -> conflatedEntry))
+            val conflatedEntry = existing.addQuantity(entry.quantity)
+            (exceptions, doc + (existing.uniqueIdentifier -> conflatedEntry))
           case None =>
-            (exceptions, doc + (entry.signature -> entry))
+            (exceptions, doc + (entry.uniqueIdentifier -> entry))
         }
     }
   }
@@ -66,10 +66,13 @@ object BSXReader {
   def load(file: String): ParsedBSXDocument = load(XML.loadFile(file))
   def load(file: File): ParsedBSXDocument = load(XML.loadFile(file))
 
-  private def typeFromString(value: String): Try[ItemType] = value match {
-    case "P" => Success(Part)
-    case v   => Failure(new Exception(s"Unknown item type `$v`"))
-  }
+  private def constructorFromString(value: String, itemId: String): Try[ItemEntry.Constructor] =
+    // As best I can tell, complex parts or assemblies have a "c" in their ID, like "3403c01"
+    (value, itemId.contains("c")) match {
+      case ("P", false) => Success(SimplePartEntry.apply)
+      case ("P", true) => Success(ComplexPartEntry.apply)
+      case (v, _)   => Failure(new Exception(s"Unknown item type `$v`"))
+    }
 
   private def conditionFromString(value: String): Try[ItemCondition] = value match {
     case "N" => Success(New)
@@ -80,23 +83,21 @@ object BSXReader {
   def load(document: Elem): ParsedBSXDocument =
     (document \\ "BrickStockXML" \\ "Inventory" \\ "Item").map(loadNode)
 
-  def loadNode(node: Node): Try[BrickStockEntry] = {
+  def loadNode(node: Node): Try[ItemEntry] = {
+    val itemId = (node \ "ItemID").text
     val tryElement = for {
-      itemType <- typeFromString((node \ "ItemTypeID").text)
+      constructor <- constructorFromString((node \ "ItemTypeID").text, itemId)
       quantity <- Try((node \ "Qty").text.toInt)
       price <- Try(BigDecimal((node \ "Price").text))
       condition <- conditionFromString((node \ "Condition").text)
-    } yield BrickStockEntry(
-      itemId = (node \ "ItemID").text,
-      typ = itemType,
-      colorId = (node \ "ColorID").text,
-      colorName = (node \ "ColorName").text,
-      categoryId = (node \ "CategoryID").text,
-      categoryName = (node \ "CategoryName").text,
-      quantity = quantity,
-      price = price,
-      condition = condition
-    )
+    } yield {
+      val colorId = (node \ "ColorID").text
+      val colorName = (node \ "ColorName").text
+      val categoryId = (node \ "CategoryID").text
+      val categoryName = (node \ "CategoryName").text
+
+      constructor(itemId, colorId, colorName, categoryId, categoryName, quantity, price, condition)
+    }
 
     // Wrap all exceptions in a higher level exception that includes the node that failed
     tryElement match {

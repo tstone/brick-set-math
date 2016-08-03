@@ -6,6 +6,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Request
 import akka.stream.scaladsl._
+import blue.array.brick._
 
 import scala.annotation.tailrec
 import scala.io.{Source => FileSource}
@@ -15,11 +16,11 @@ import scala.xml.XML
 
 object BSXSource {
 
-  def fromFile(file: File)(implicit system: ActorSystem): Source[BrickStockEntry, ActorRef] =
+  def fromFile(file: File)(implicit system: ActorSystem): Source[ItemEntry, ActorRef] =
     Source.actorPublisher(Props(new BSXSourceActor(file)))
 
 
-  private class BSXSourceActor(file: File) extends ActorPublisher[BrickStockEntry] {
+  private class BSXSourceActor(file: File) extends ActorPublisher[ItemEntry] {
 
     lazy val fileIter = FileSource.fromFile(file).iter
 
@@ -38,7 +39,7 @@ object BSXSource {
         }
     }
 
-    def readOne: Option[Try[BrickStockEntry]] = {
+    def readOne: Option[Try[ItemEntry]] = {
       // Since XML isn't really a line-by-line format, read each character into a buffer
       // until have both an <Item> and a </Item>.
       for {

@@ -4,9 +4,9 @@ import org.specs2.mutable.SpecificationLike
 import java.io.File
 
 import blue.array.brick.generators._
-import blue.array.brick.{ItemCondition, ItemType}
+import blue.array.brick.{ComplexPartEntry, ItemCondition, ItemEntry, SimplePartEntry}
 
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 
 class BSXReaderSpec extends SpecificationLike {
@@ -21,8 +21,8 @@ class BSXReaderSpec extends SpecificationLike {
       val first = entries.head.get
       val second = entries.last.get
 
+      first must beAnInstanceOf[SimplePartEntry]
       first.itemId mustEqual "99009"
-      first.typ mustEqual ItemType.Part
       first.colorId mustEqual "86"
       first.colorName mustEqual "Light Bluish Gray"
       first.categoryId mustEqual "36"
@@ -30,6 +30,7 @@ class BSXReaderSpec extends SpecificationLike {
       first.quantity mustEqual 3
       first.price mustEqual BigDecimal(0.055d)
 
+      second must beAnInstanceOf[ComplexPartEntry]
       second.itemId mustEqual "3403c01"
       second.condition mustEqual ItemCondition.New
     }
@@ -39,8 +40,8 @@ class BSXReaderSpec extends SpecificationLike {
   "#conform" should {
     "return a mapping of entries" in {
       val parsedDoc = Seq(
-        Success(genBrickStockEntry.generate),
-        Success(genBrickStockEntry.generate),
+        Success(genItemEntry.generate),
+        Success(genItemEntry.generate),
         Failure(new Exception("Didn't work"))
       )
 
@@ -52,10 +53,10 @@ class BSXReaderSpec extends SpecificationLike {
 
     "when the price matches" >> {
       "combine the quantity of items that are the same" in {
-        val parsedDoc = Seq(
-          Success(genBrickStockEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 1, typ = ItemType.Part, condition = ItemCondition.New)),
-          Success(genBrickStockEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 2, typ = ItemType.Part, condition = ItemCondition.New)),
-          Success(genBrickStockEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 3, typ = ItemType.Part, condition = ItemCondition.New))
+        val parsedDoc: Seq[Try[ItemEntry]] = Seq(
+          Success(genSimplePartEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 1, condition = ItemCondition.New)),
+          Success(genSimplePartEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 2, condition = ItemCondition.New)),
+          Success(genSimplePartEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 3, condition = ItemCondition.New))
         )
         val (_, conformed) = BSXReader.conform(parsedDoc)
         val (_, item) = conformed.toSeq.head
@@ -66,10 +67,10 @@ class BSXReaderSpec extends SpecificationLike {
 
     "when the price matches" >> {
       "combine the quantity of items that are the same but add an exception about the price" in {
-        val parsedDoc = Seq(
-          Success(genBrickStockEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 1, typ = ItemType.Part, condition = ItemCondition.New)),
-          Success(genBrickStockEntry.generate.copy(itemId = "4444", price = BigDecimal(0.020), quantity = 2, typ = ItemType.Part, condition = ItemCondition.New)),
-          Success(genBrickStockEntry.generate.copy(itemId = "4444", price = BigDecimal(0.030), quantity = 3, typ = ItemType.Part, condition = ItemCondition.New))
+        val parsedDoc: Seq[Try[ItemEntry]] = Seq(
+          Success(genSimplePartEntry.generate.copy(itemId = "4444", price = BigDecimal(0.010), quantity = 1, condition = ItemCondition.New)),
+          Success(genSimplePartEntry.generate.copy(itemId = "4444", price = BigDecimal(0.020), quantity = 2, condition = ItemCondition.New)),
+          Success(genSimplePartEntry.generate.copy(itemId = "4444", price = BigDecimal(0.030), quantity = 3, condition = ItemCondition.New))
         )
         val (exceptions, conformed) = BSXReader.conform(parsedDoc)
         val (_, item) = conformed.toSeq.head
